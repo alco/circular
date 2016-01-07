@@ -1,0 +1,74 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+
+  <title>Circular Rhythm</title>
+
+</head>
+
+<body>
+  <script src="subcollider.js"></script>
+  <script src="timbre.js"></script>
+  <script type="text/javascript" charset="utf-8">
+    function concat() {
+      var result = [];
+      for (var i = 0; i < arguments.length; i++) {
+        result = result.concat(arguments[i]);
+      }
+      return result;
+    }
+
+    timbre.rec(function(output) {
+      var f1 = 349.228, g1_flat = 369.994, g1 = 391.995, g1_sharp = 415.305, a1 = 440.000,
+          a1_sharp = 466.164, b1_flat = 466.164, b1 = 493.883,
+          c2 = 523.251, d2 = 587.330, e2_flat = 622.254,
+          c1 = 261.626, d1_flat = 277.183, e1_flat = 311.127, e1 = 329.628;
+
+      var bar1_a = [g1, a1_sharp, d2, g1*2, a1_sharp*2, d2*2];
+      var bar1_b = [g1, a1_sharp, d2, d2];
+      var bar1 = concat(bar1_a, bar1_a, bar1_b);
+
+      var bar2_a = [f1, a1, d2, f1*2, a1*2, d2*2];
+      var bar2_b = [f1, a1, d2, d2];
+      var bar2 = concat(bar2_a, bar2_a, bar2_b);
+
+      var bar3_a = [e1_flat, g1, c2, e1_flat*2, g1*2, c2*2];
+      var bar3_b = [e1_flat, g1, c2, c2];
+      var bar3 = concat(bar3_a, bar3_a, bar3_b);
+
+      var bar4_a = [c1, e1_flat, g1, c1*2, e1_flat*2, g1*2];
+      var bar4_b = [c1, e1_flat, g1, g1];
+      var bar4 = concat(bar4_a, bar4_a, bar4_b);
+
+      var midis = concat(bar1, bar1, bar2, bar2, bar3, bar3, bar4, bar4);
+      var msec  = timbre.timevalue("bpm120 l16");
+      var synth = T("OscGen", {env: T("perc", {r: msec, ar: true})});
+
+      T("interval", {interval: msec}, function(count) {
+        if (count < midis.length) {
+          synth.noteOnWithFreq(midis[count], 100);
+        } else {
+          output.done();
+        }
+      }).start();
+
+      output.send(synth);
+    }).then(function(result) {
+      var M = T("buffer", {buffer: result, loop: true});
+      var R = T("buffer", {buffer: result, loop: true});
+      var L = T("buffer", {buffer: result, loop: true});
+
+      var num = 400;
+      var duration = M.duration;
+
+      L.pitch = (duration * (num - 1)) / (duration * num) * 2;
+      R.pitch = (duration * (num - 1)) / (duration * num) / 2;
+
+      T("delay", {time:"bpm120 l16", fb:0.1, cross:true},
+        M
+      ).play();
+    });
+  </script>
+</body>
+</html>
